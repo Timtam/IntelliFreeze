@@ -93,11 +93,36 @@ local function getSelectedTracks(tracks, recursive)
 end
 
 -- we consider a track with FX freezeable
+-- if any take on that track contains FX, the track will be freozen too
 local function getTrackRequiresFreezing(track)
 
-  local fxCount = reaper.TrackFX_GetCount(track)
+  if reaper.TrackFX_GetCount(track) > 0 then
+    return true
+  end
 
-  return fxCount > 0
+  local itemCount = reaper.CountTrackMediaItems(track)
+
+  local i, j
+  
+  for i = 0, itemCount - 1 do
+
+    local item = reaper.GetTrackMediaItem(track, i)
+    local takeCount = reaper.CountTakes(item)
+
+    if takeCount > 0 then
+
+      for j = 0, takeCount - 1 do
+
+        local take = reaper.GetMediaItemTake(item, j)
+
+        if reaper.TakeFX_GetCount(take) > 0 then
+          return true
+        end
+      end
+    end
+  end
+
+  return false
 end
 
 -- copied from https://stackoverflow.com/questions/49709998/how-to-filter-a-lua-array-inplace
